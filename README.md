@@ -1,32 +1,7 @@
-<div align="right" dir="rtl">
+# AiStudioBox
 
-# שם הפרויקט
+סקריפט [Tampermonkey](https://www.tampermonkey.net/) לצמצום בלוקי הקוד של [AiStudio](https://AiStudio.google.com/app/).
 
-תיאור קצר, מתומצת וברור של הפרויקט. מה הוא עושה, לאיזו מטרה הוא נועד ומה הערך המרכזי שלו.
+להתקנה לחץ:
 
----
-
-## 📌 תכונות עיקריות
-
-- **תכונה ראשונה:** תיאור קצר של היכולת או הכלי.
-- **תכונה שנייה:** תיאור קצר של היכולת או הכלי.
-- **תכונה שלישית:** תיאור קצר של היכולת או הכלי.
-- **תמיכה מלאה ב-RTL:** התאמה מלאה לשפות הנכתבות מימין לשמאל.
-
----
-
-## 🛠️ טכנולוגיות ודרישות מוקדמות
-
-לפני תחילת העבודה, ודא שמורכבות אצלך הדרישות הבאות:
-
-- **Node.js** (גרסה 18 ומעלה) / **Python** (גרסה 3.9 ומעלה)
-- **Git**
-
----
-
-## 🚀 התקנה והרצה
-
-1. **שיבוט המאגר (Clone):**
-   ```bash
-   git clone [https://github.com/username/project-name.git](https://github.com/username/project-name.git)
-   cd project-name
+https://github.com/Tzadikvtovlo/AiStudioBox/raw/refs/heads/main/Tampermonkey.user.js
