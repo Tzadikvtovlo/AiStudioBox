@@ -5,8 +5,8 @@
 // @description  AiStudioBox
 // @author       צדיק וטוב לו וההודי של gemini
 // @match        https://aistudio.google.com/*
-// @updateURL    https://raw.githubusercontent.com/Tzadikvtovlo/AiStudioBox/main/Tampermonkey.user.js
-// @downloadURL  https://raw.githubusercontent.com/Tzadikvtovlo/AiStudioBox/main/Tampermonkey.user.js
+// @updateURL    https://raw.githubusercontent.com/Tzadikvtovlo/AiStudioBox/main/t/Tampermonkey.user.js
+// @downloadURL  https://raw.githubusercontent.com/Tzadikvtovlo/AiStudioBox/main/t/Tampermonkey.user.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=AiStudio.google.com
 // @grant        none
 // ==/UserScript==
