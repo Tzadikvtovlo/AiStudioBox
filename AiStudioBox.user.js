@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AiStudioBox
 // @namespace    http://tampermonkey.net/
-// @version      2.5
-// @description  צמצום חכם, מסגרות זוהרות, אייקוני רשימה דינמיים וספירת קבצים מלאה.
+// @version      2.6
+// @description  צמצום חכם, מסגרות זוהרות, אייקוני רשימה דינמיים, ספירת קבצים מלאה ושינוי שם קובץ מותאם אישית בטולטיפ.
 // @author       צדיק וטוב לו וההודי של AiStudio
 // @match        https://aistudio.google.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=aistudio.google.com
@@ -19,6 +19,10 @@
     const CONFIG_KEY = 'AiStudioBox_CollapseMode';
     // 'live' = צמצום תוך כדי כתיבה | 'finished' = צמצום רק בסיום
     let collapseMode = localStorage.getItem(CONFIG_KEY) || 'live';
+
+    // משתנים גלובליים לניהול הטולטיפ האינטראקטיבי של שמות הקבצים
+    let customTooltipEl = null;
+    let hideTooltipTimeout = null;
 
     // --- שרטוטי אייקונים קוויים נקיים (בהשראת Lucide) ---
 
@@ -103,8 +107,123 @@
                 background: rgba(128, 128, 128, 0.15);
             }
             .ai-ext-icon-btn:active { transform: scale(0.92); }
+
+            /* עיצוב טולטיפ שינוי שם הקובץ */
+            .ai-ext-custom-tooltip {
+                position: fixed;
+                z-index: 1000000;
+                display: none;
+                align-items: center;
+                gap: 8px;
+                background: #1e1f20;
+                color: #e3e3e3;
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                border-radius: 8px;
+                padding: 6px 10px;
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                font-size: 13px;
+                direction: rtl;
+                pointer-events: auto;
+            }
+            .ai-ext-tooltip-label {
+                font-size: 12px;
+                color: #c4c7c5;
+                white-space: nowrap;
+                user-select: none;
+            }
+            .ai-ext-filename-input {
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 4px;
+                color: #ffffff;
+                padding: 3px 8px;
+                font-size: 12px;
+                font-family: monospace, monospace;
+                direction: ltr;
+                text-align: left;
+                outline: none;
+                min-width: 150px;
+                max-width: 260px;
+                transition: border-color 0.2s, background 0.2s;
+            }
+            .ai-ext-filename-input:focus {
+                border-color: #8ab4f8;
+                background: rgba(255, 255, 255, 0.14);
+            }
         `;
         (document.head || document.documentElement).appendChild(style);
+    }
+
+    // --- יצירה וניהול הטולטיפ האינטראקטיבי ---
+    function getOrCreateCustomTooltip() {
+        if (customTooltipEl) return customTooltipEl;
+
+        const tip = document.createElement('div');
+        tip.id = 'ai-ext-filename-tooltip';
+        tip.className = 'ai-ext-custom-tooltip';
+
+        const label = document.createElement('span');
+        label.className = 'ai-ext-tooltip-label';
+        label.textContent = 'שם קובץ:';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'ai-ext-filename-input';
+        input.spellcheck = false;
+
+        tip.appendChild(label);
+        tip.appendChild(input);
+        document.body.appendChild(tip);
+
+        // שמירת השם בזמן הקלדה
+        input.addEventListener('input', (e) => {
+            if (tip.currentBlock) {
+                const val = e.target.value.trim();
+                if (val) {
+                    tip.currentBlock.setAttribute('data-custom-filename', val);
+                } else {
+                    tip.currentBlock.removeAttribute('data-custom-filename');
+                }
+            }
+        });
+
+        // יציאה בעת לחיצה על Enter
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                input.blur();
+                tip.style.display = 'none';
+            }
+        });
+
+        // סגירה בעזיבת פוקוס
+        input.addEventListener('blur', () => {
+            hideTooltipTimeout = setTimeout(() => {
+                tip.style.display = 'none';
+            }, 250);
+        });
+
+        tip.addEventListener('mouseenter', () => {
+            clearTimeout(hideTooltipTimeout);
+        });
+
+        tip.addEventListener('mouseleave', () => {
+            if (document.activeElement !== input) {
+                hideTooltipTimeout = setTimeout(() => {
+                    tip.style.display = 'none';
+                }, 250);
+            }
+        });
+
+        document.addEventListener('pointerdown', (e) => {
+            if (tip.style.display !== 'none' && !tip.contains(e.target) && !e.target.closest('[data-ai-custom-dl]')) {
+                tip.style.display = 'none';
+            }
+        });
+
+        customTooltipEl = tip;
+        return tip;
     }
 
     function updateToggleBtnState(btn) {
@@ -172,6 +291,10 @@
 
     // --- פונקציות ליבה לטיפול בקוד ---
     function getFilenameForBlock(block) {
+        // אם המשתמש הגדיר שם קובץ מותאם אישית בטולטיפ
+        const custom = block.getAttribute('data-custom-filename');
+        if (custom && custom.trim().length > 0) return custom.trim();
+
         let filename = 'code_snippet.txt';
         const regex = /([a-zA-Z0-9_\-]+\.(?:json|jsx|tsx|html|yaml|vue|svelte|cpp|css|java|py|js|ts|cs|txt|md|sh|yml|xml|php|rb|go|rs|sql|c|h))\b/ig;
         const container = block.closest('ms-model-turn, ms-chat-turn, ms-chunk, article, [class*="message"]') || block.parentElement;
@@ -298,15 +421,53 @@
                     block.setAttribute('data-collapsed-by-script', 'true');
                 }
 
-                // הורדה אישית
+                // הורדה אישית עם טולטיפ אינטראקטיבי לשינוי שם
                 setTimeout(() => {
                     const downloadBtn = getNativeDownloadBtn(block);
-                    if (downloadBtn) {
-                        const filename = getFilenameForBlock(block);
-                        downloadBtn.title = `הורד בשם המקורי: ${filename}`;
+                    if (downloadBtn && !downloadBtn.hasAttribute('data-ai-custom-dl')) {
+                        downloadBtn.setAttribute('data-ai-custom-dl', 'true');
+                        downloadBtn.removeAttribute('title'); // מניעת הטולטיפ הרגיל של הדפדפן
+
+                        // הצגת הטולטיפ ועריכת השם בריחוף
+                        downloadBtn.addEventListener('mouseenter', () => {
+                            clearTimeout(hideTooltipTimeout);
+                            const tip = getOrCreateCustomTooltip();
+                            tip.currentBlock = block;
+                            const input = tip.querySelector('.ai-ext-filename-input');
+                            input.value = getFilenameForBlock(block);
+
+                            tip.style.display = 'flex';
+                            tip.style.visibility = 'hidden';
+
+                            const rect = downloadBtn.getBoundingClientRect();
+                            const tipRect = tip.getBoundingClientRect();
+                            let top = rect.top - tipRect.height - 8;
+                            if (top < 10) top = rect.bottom + 8;
+                            let left = rect.left + (rect.width / 2) - (tipRect.width / 2);
+                            if (left < 10) left = 10;
+                            if (left + tipRect.width > window.innerWidth - 10) {
+                                left = window.innerWidth - tipRect.width - 10;
+                            }
+
+                            tip.style.top = `${top}px`;
+                            tip.style.left = `${left}px`;
+                            tip.style.visibility = 'visible';
+                        });
+
+                        downloadBtn.addEventListener('mouseleave', () => {
+                            hideTooltipTimeout = setTimeout(() => {
+                                const tip = getOrCreateCustomTooltip();
+                                const input = tip.querySelector('.ai-ext-filename-input');
+                                if (document.activeElement !== input) {
+                                    tip.style.display = 'none';
+                                }
+                            }, 250);
+                        });
+
                         downloadBtn.addEventListener('click', (e) => {
                             e.stopImmediatePropagation(); e.preventDefault();
-                            triggerDownload(extractCode(block), filename);
+                            const currentFilename = getFilenameForBlock(block);
+                            triggerDownload(extractCode(block), currentFilename);
                             const originalBg = downloadBtn.style.backgroundColor;
                             downloadBtn.style.backgroundColor = 'rgba(60, 64, 67, 0.12)';
                             setTimeout(() => { downloadBtn.style.backgroundColor = originalBg; }, 300);
