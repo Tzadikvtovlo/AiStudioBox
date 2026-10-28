@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         AiStudioBox
 // @namespace    http://tampermonkey.net/
-// @version      2.6
+// @version      2.7
 // @description  צמצום חכם, מסגרות זוהרות, אייקוני רשימה דינמיים, ספירת קבצים מלאה ושינוי שם קובץ מותאם אישית בטולטיפ.
 // @author       צדיק וטוב לו וההודי של AiStudio
 // @match        https://aistudio.google.com/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=aistudio.google.com
+// @icon         https://www.google.com/s2/favicons?sz=256&domain=aistudio.google.com
 // @updateURL    https://raw.githubusercontent.com/Tzadikvtovlo/AiStudioBox/main/AiStudioBox.user.js
 // @downloadURL  https://raw.githubusercontent.com/Tzadikvtovlo/AiStudioBox/main/AiStudioBox.user.js
 // @grant        none
